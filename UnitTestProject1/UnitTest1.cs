@@ -33,7 +33,7 @@ namespace UnitTestProject1
                 string t = w.Z;
                 double b = Convert.ToDouble(t);
                 myZZ.Add(b);
-                
+               
             }
             om = listOM();
             ol = listOL();
@@ -45,18 +45,18 @@ namespace UnitTestProject1
                     omI = om[i];
                     olI = ol[j];
                   
-                    List<double> muModel = DistMode(myZZ, omI, olI, myList);
+                    double muModel = DistMode(myZZ, omI, olI, myList);
                     Normaliz normal = new Normaliz();
                     List<double> mscr = normal.normilizeList();
-               //   var m = Matrix<double>.Build.Random(ol.Count, om.Count);
+                  //var m = Matrix<double>.Build.Random(ol.Count, om.Count);
                  // var mu_model = Matrix<double>.Build.Random(myZZ.Count, myZZ.Count);
 
                    
                     for (int k = 0; k < mscr.Count; k++)
                     {
 
-
-
+                     double  mu_model_norm = muModel + mscr[k];
+                     
 
 
                     }
@@ -67,7 +67,7 @@ namespace UnitTestProject1
         }
 
         //DisMode
-        public List<double> DistMode(List<double> zz, double om, double ol, List<double> dm)
+        public double DistMode(List<double> zz, double om, double ol, List<double> dm)
         {
 
             double ok = 1.0 - om - ol;
@@ -105,7 +105,7 @@ namespace UnitTestProject1
             double lumDist = D * (1 + selectedZ);
             double DM = 5 * Math.Log10(lumDist);
             dm.Add(DM);
-            return dm;
+            return DM;
         }
         //Function f
         public double f(double z)
