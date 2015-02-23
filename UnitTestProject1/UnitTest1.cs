@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using MathNet.Numerics.LinearAlgebra.Double;
 using MathNet.Numerics.LinearAlgebra;
 using System.Xml.Serialization;
+using System.Linq;
 using System.IO;
+using System.Globalization;
 
 namespace UnitTestProject1
 {
@@ -24,55 +26,97 @@ namespace UnitTestProject1
         {
             //dmList init here to have keep data 
             List<double> myList = new List<double>();
+
             xmlSerialiser serelize = new xmlSerialiser();
+            Normaliz normal = new Normaliz();
 
             List<double> myZZ = new List<double>();
+            List<double> muModel = new List<double>();
+            //muerr list + 0.02
+            List<double> muerrList=new List<double>();
+            IEnumerable<double> resultOfthisshit = null;
+           List<double> muList=new List<double>();
+            List<double> mscr = normal.normilizeList();
+           
+          
+
             var myData = serelize.deserilizer("d:/temp/new2.xml");
             foreach (var w in myData)
             {
-                string t = w.Z;
-                double b = Convert.ToDouble(t);
-                myZZ.Add(b);
-               
+                string z = w.Z;
+                string muerr = w.MUERR;
+                string mu=w.MU;
+                double muerrValue = Convert.ToDouble(muerr);
+                double muValue=Convert.ToDouble(mu);
+                Math.Round(muValue,2);
+                Math.Round(muerrValue, 2);
+                double zValue = Convert.ToDouble(z);
+                Math.Round(zValue, 2);
+                muerrList.Add(muerrValue+0.02);
+                myZZ.Add(zValue);
+                muList.Add(muValue);
+           
             }
             om = listOM();
             ol = listOL();
-
+            //matrix
+            Matrix<double> chi2 = Matrix<double>.Build.Dense(ol.Count, om.Count,Math.Exp(20));
+            var mscrUsed = Matrix<double>.Build.Dense(myZZ.Count, myZZ.Count);
             for (int i = 0; i < om.Count; i++)
             {
                 for (int j = 0; j < ol.Count; j++)
                 {
                     omI = om[i];
                     olI = ol[j];
-                  
-                    double muModel = DistMode(myZZ, omI, olI, myList);
-                    Normaliz normal = new Normaliz();
-                    List<double> mscr = normal.normilizeList();
-                  //var m = Matrix<double>.Build.Random(ol.Count, om.Count);
-                 // var mu_model = Matrix<double>.Build.Random(myZZ.Count, myZZ.Count);
+                  //mu_MOdel
+                    muModel.Clear();
 
-                   
+                    muModel = DistMode(myZZ, omI, olI);
+               
+         //Mu_model normal 
                     for (int k = 0; k < mscr.Count; k++)
                     {
+                        double compare = mscr[k];
+                
 
-                     double  mu_model_norm = muModel + mscr[k];
-                     
+                        muModel.ForEach(delegate(double mm) {
 
+                        double muModelNormal=mm + compare;
+                        });
+
+                        muerrList.ForEach(delegate(double g) { double f = Math.Pow(g, 2); });
+                        //result of top syntax 
+                        var topElemet = muModel.Zip(muList, (x, y) => Math.Pow((x - y), 2));
+                        //result bottom syntax
+                        resultOfthisshit = topElemet.Zip(muerrList, (x, y) => x / y);
+                        
+                       double finalR=resultOfthisshit.Sum();
+                       if (finalR < chi2[i, j])
+                        {
+                            chi2[i, j] = finalR;
+                            mscrUsed[i, j] = compare;
+                        }
+                        //caculate chi2 to put it into the list 
+                 // var chi2List=(Math.Pow(mu_model_norm - muList[k],2) / Math.Pow(muerrList[k],2));
 
                     }
                 }
             }
-
-            Assert.IsNotNull(myList.Count);
+           
+            int p = resultOfthisshit.Count();
+            Assert.IsNotNull(p);
         }
 
         //DisMode
-        public double DistMode(List<double> zz, double om, double ol, List<double> dm)
+        public List<double> DistMode(List<double> zz, double om, double ol)
         {
 
             double ok = 1.0 - om - ol;
             double R0;
-            double D;
+           
+            List<double> x = new List<double>();
+            //list D
+            List<double> DM = new List<double>();
             double X = 0;
 
             for (int i = 0; i < zz.Count; i++)
@@ -83,28 +127,44 @@ namespace UnitTestProject1
                 Func<double, double> myFunction = f;
                 //pointer
                 selectedZ = zz[i];
-                X = MathNet.Numerics.Integration.SimpsonRule.IntegrateComposite(myFunction, selectedZ, 4, 20);
-
+                X  = MathNet.Numerics.Integration.SimpsonRule.IntegrateComposite(myFunction, selectedZ, 4, 20);
+                x.Add(X);
             };
 
             if (ok < 0.0)
             {
                 R0 = 1 / Math.Sqrt(-ok);
-                D = R0 * Math.Sin(X / R0);
+              x.ForEach(delegate(double t) {
+                    double y = R0 * Math.Sin(t / R0);
+                });
+
             }
             else
                 if (ok > 0.0)
                 {
                     R0 = 1 / Math.Sqrt(ok);
-                    D = R0 * Math.Sinh(X / R0);
+                    x.ForEach(delegate(double t) {
+                        double y = R0 * Math.Sinh(t / R0);
+                    });
+                  //  D = R0 * Math.Sinh(X / R0);
                 }
-                else
-                {
-                    D = X;
-                }
-            double lumDist = D * (1 + selectedZ);
-            double DM = 5 * Math.Log10(lumDist);
-            dm.Add(DM);
+                //else
+                //{
+
+                //   D = X;
+                //}
+
+         for(int i=0;i < zz.Count;i++){
+            double ran = x[i] * (1 + zz[i]);
+            
+            double y= 5 * Math.Log10(ran);
+            DM.Add(y);
+         }
+
+
+        //    double lumDist = D * (1 + selectedZ);
+         //   double DM = 5 * Math.Log10(lumDist);
+         //   dm.Add(DM);
             return DM;
         }
         //Function f
@@ -161,7 +221,7 @@ namespace UnitTestProject1
         const double H0 = 7.0;
         double c_H0 = 3.0 * Math.Exp(5) / H0;
 
-        public List<double> normilizeList()
+        public  List<double> normilizeList()
         {
 
             List<double> normolizeNumbers = new List<double>();
@@ -255,7 +315,7 @@ namespace UnitTestProject1
          * Deserializer for DataModel -> xml to Array list in memory 
          *path == xml file path
          */
-        public List<DataModel> deserilizer(string path)
+        public  List<DataModel> deserilizer(string path)
         {
             //   DataModel myO;
             List<DataModel> myObjects = null;
