@@ -34,7 +34,7 @@ namespace UnitTestProject1
             List<double> muModel = new List<double>();
             //muerr list + 0.02
             List<double> muerrList=new List<double>();
-            IEnumerable<double> resultOfthisshit = null;
+            IEnumerable<double> result = null;
            List<double> muList=new List<double>();
             List<double> mscr = normal.normilizeList();
            
@@ -88,9 +88,9 @@ namespace UnitTestProject1
                         //result of top syntax 
                         var topElemet = muModel.Zip(muList, (x, y) => Math.Pow((x - y), 2));
                         //result bottom syntax
-                        resultOfthisshit = topElemet.Zip(muerrList, (x, y) => x / y);
+                        result = topElemet.Zip(muerrList, (x, y) => x / y);
                         
-                       double finalR=resultOfthisshit.Sum();
+                       double finalR=result.Sum();
                        if (finalR < chi2[i, j])
                         {
                             chi2[i, j] = finalR;
@@ -103,7 +103,7 @@ namespace UnitTestProject1
                 }
             }
            
-            int p = resultOfthisshit.Count();
+            int p = result.Count();
             Assert.IsNotNull(p);
         }
 
