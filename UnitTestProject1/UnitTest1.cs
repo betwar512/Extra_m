@@ -37,7 +37,7 @@ namespace UnitTestProject1
             }
             om = listOM();
             ol = listOL();
-
+        //for(int i=0,j=0;i<om.Count&&ol.Count;i++,j++)
             for (int i = 0; i < om.Count; i++)
             {
                 for (int j = 0; j < ol.Count; j++)
