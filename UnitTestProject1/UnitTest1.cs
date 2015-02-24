@@ -60,7 +60,7 @@ namespace UnitTestProject1
             om = listOM();
             ol = listOL();
             //matrix
-            Matrix<double> chi2 = Matrix<double>.Build.Dense(ol.Count, om.Count,Math.Exp(20));
+            Matrix<double> chi2 = Matrix<double>.Build.Dense(om.Count, ol.Count,Math.Exp(20));
             var mscrUsed = Matrix<double>.Build.Dense(myZZ.Count, myZZ.Count);
             for (int i = 0; i < om.Count; i++)
             {
@@ -71,12 +71,12 @@ namespace UnitTestProject1
                   //mu_MOdel
                     muModel.Clear();
 
-                    muModel = DistMode(myZZ, omI, olI);
+                    muModel = DistMod(myZZ, omI, olI);
                
          //Mu_model normal 
                     for (int k = 0; k < mscr.Count; k++)
                     {
-                        double compare = mscr[k];
+                        double compare =Math.Round(mscr[k],4);
                 
 
                         muModel.ForEach(delegate(double mm) {
@@ -86,29 +86,37 @@ namespace UnitTestProject1
 
                         muerrList.ForEach(delegate(double g) { double f = Math.Pow(g, 2); });
                         //result of top syntax 
-                        var topElemet = muModel.Zip(muList, (x, y) => Math.Pow((x - y), 2));
-                        //result bottom syntax
-                        result = topElemet.Zip(muerrList, (x, y) => x / y);
-                        
-                       double finalR=result.Sum();
-                       if (finalR < chi2[i, j])
-                        {
-                            chi2[i, j] = finalR;
-                            mscrUsed[i, j] = compare;
-                        }
-                        //caculate chi2 to put it into the list 
-                 // var chi2List=(Math.Pow(mu_model_norm - muList[k],2) / Math.Pow(muerrList[k],2));
+                       IEnumerable<double> topElemet = muModel.Zip(muList, (x, y) => Math.Pow((x - y), 2));
+                       foreach (double o in topElemet)
+                       {
+                           var t = Math.Round(o);
 
+                       }
+
+                            //result bottom syntax
+                        result = topElemet.Zip(muerrList, (x, y) => x / y);
+
+                        double finalR = Math.Round(result.Sum(),4);
+
+                        var testCompare = Math.Round( chi2[i, j],4);
+                           if (!double.IsNaN(finalR) && finalR < testCompare)
+                           {
+                               chi2[i, j] = finalR;
+                               mscrUsed[i, j] = compare;
+                           }
+                       
+                        //caculate chi2 to put it into the list 
                     }
                 }
             }
-           
+     
             int p = result.Count();
             Assert.IsNotNull(p);
         }
 
+
         //DisMode
-        public List<double> DistMode(List<double> zz, double om, double ol)
+        public List<double> DistMod(List<double> zz, double om, double ol)
         {
 
             double ok = 1.0 - om - ol;
@@ -128,7 +136,8 @@ namespace UnitTestProject1
                 //pointer
                 selectedZ = zz[i];
                 X  = MathNet.Numerics.Integration.SimpsonRule.IntegrateComposite(myFunction, selectedZ, 4, 20);
-                x.Add(X);
+                var roundedX = Math.Round(X,4);
+                x.Add(roundedX);
             };
 
             if (ok < 0.0)
@@ -197,7 +206,8 @@ namespace UnitTestProject1
             for (double i = 0.0; i < 0.7; )
             {
                 i += 0.005;
-                OM.Add(i);
+              var e=  Math.Round(i, 4);
+                OM.Add(e);
             }
             return OM;
         }
@@ -208,7 +218,8 @@ namespace UnitTestProject1
             for (double i = 0.0; i < 1; )
             {
                 i += 0.005;
-                OL.Add(i);
+              var e=  Math.Round(i, 4);
+                OL.Add(e);
             }
             return OL;
         }

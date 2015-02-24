@@ -68,59 +68,92 @@ namespace ReadFileData
             return OL;
         }
 
-        
-        public List<double> DistMode(List<double> zz,double om,double ol)
+
+        public List<double> DistMod(List<double> zz, double om, double ol)
         {
-            
+
             double ok = 1.0 - om - ol;
             double R0;
-            List<double> dm = new List<double>();
+
+            List<double> x = new List<double>();
+            //list D
+            List<double> DM = new List<double>();
+            double X = 0;
+
             for (int i = 0; i < zz.Count; i++)
             {
 
-                Hz myHz = new Hz();
 
-                Func<double, double> myFunction = f1;
-                
-                double z = zz[i];
-                myFunction(z);
-                MathNet.Numerics.Integration.SimpsonRule.IntegrateComposite(myFunction,3.2,3.1,5);
-                
+                //delegate pointer for function f
+                Func<double, double> myFunction = f;
+                //pointer
+                selectedZ = zz[i];
+                X = MathNet.Numerics.Integration.SimpsonRule.IntegrateComposite(myFunction, selectedZ, 4, 20);
+                var roundedX = Math.Round(X, 4);
+                x.Add(roundedX);
             };
 
-            if (ok < 0.0) {
+            if (ok < 0.0)
+            {
                 R0 = 1 / Math.Sqrt(-ok);
+                x.ForEach(delegate(double t)
+                {
+                    double y = R0 * Math.Sin(t / R0);
+                });
+
             }
             else
-                if(ok>0.0){
+                if (ok > 0.0)
+                {
                     R0 = 1 / Math.Sqrt(ok);
-            }
-                else{
+                    x.ForEach(delegate(double t)
+                    {
+                        double y = R0 * Math.Sinh(t / R0);
+                    });
+                    //  D = R0 * Math.Sinh(X / R0);
+                }
+            //else
+            //{
 
-            }
-            return dm;
+            //   D = X;
+            //}
 
+            for (int i = 0; i < zz.Count; i++)
+            {
+                double ran = x[i] * (1 + zz[i]);
+
+                double y = 5 * Math.Log10(ran);
+                DM.Add(y);
+            }
+
+
+            //    double lumDist = D * (1 + selectedZ);
+            //   double DM = 5 * Math.Log10(lumDist);
+            //   dm.Add(DM);
+            return DM;
         }
-        public static double f1(double x)
+        public double f(double z)
         {
-            return 0;
+            var x = omI;
+            var y = olI;
+
+            double t = HzInverserse(z, x, y);
+            return t;
         }
+
+        public double HzInverserse(double z, double om, double ol)
+        {
+
+            double Hz = Math.Sqrt(Math.Pow((1 + om) * z, 2) * ((om * z) + 1) - (ol * z * (z * 2)));
+            double hZi = 1.0 / Hz;
+            return hZi;
+
+        }
+
+        public double selectedZ { get; set; }
+        public double omI { get; set; }
+        public double olI { set; get; }
     }
 
-    public class Hz
-        {
-
-            /*
-             * this is the cosmological model we are testing, written in terms of z 
-             *(redshift) instead of scale factor a
-             */
-            public double HzInverserse(double z, double om, double ol)
-            {
-
-                double Hz = Math.Sqrt(Math.Pow((1 + om) * z, 2) * ((om * z) + 1) - (ol * z * (z * 2)));
-                double hZi = 1.0 / Hz;
-                return hZi;
-
-            }
-        }
+   
 }
